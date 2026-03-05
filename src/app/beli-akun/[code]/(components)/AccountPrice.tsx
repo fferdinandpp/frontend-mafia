@@ -34,25 +34,12 @@ const AccountPrice = ({
           {account && account.status}
         </h4>
       </div>
-      <div className="flex md:flex-row flex-col justify-between w-full  md:space-x-3  md:space-y-0 space-y-3 mt-3">
-        <div
-          // onClick={() =>
-          //   router.push(account?.link_wa ?? account?.link_tele ?? "")
-          // }
-          onClick={() => router.push("https://wa.me/6289682143675")}
-          className="cursor-pointer  glass-card w-full xl:w-1/3 font-bold text-white text-2xl xl:text-4xl px-5  rounded-xl flex items-center justify-center"
-        >
-          NEGO?
-        </div>
-        <div
-          onClick={onClick}
-          className="w-full xl:w-2/3 cursor-pointer text-[#0B3CAA] text-center font-bold bg-white text-2xl xl:text-4xl px-10 py-3 rounded-xl flex flex-col justify-center"
-        >
-          <p>BELI SEKARANG</p>
-          <p className="font-medium text-lg xl:text-base">
-            Data Akun Akan Terkirim Otomatis
-          </p>
-        </div>
+
+      <div
+        onClick={onClick}
+        className="w-full xl:w-2/3 cursor-pointer text-[#0B3CAA] text-center font-bold bg-white text-2xl xl:text-4xl px-10 py-3 rounded-xl flex flex-col justify-center"
+      >
+        <p>BELI SEKARANG</p>
       </div>
     </div>
   );

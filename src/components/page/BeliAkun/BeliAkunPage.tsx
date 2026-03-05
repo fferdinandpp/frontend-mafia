@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import AccountList from "./AccountList";
 import { TAccountFilters } from "@/data/api/account-market/get-account";
 import { harabaraMaisDemo } from "@/utils/font";
@@ -10,57 +10,95 @@ const gameOptions = [
   {
     label: "Semua",
     value: "",
-    icon: "/images/game/all.webp",
+    icon: "/images/logo/mafiastorelogo.webp",
   },
   {
     label: "Efootball",
     value: "efootball",
-    icon: "/images/game/efootball.webp",
+    icon: "/images/logo/efootball.webp",
   },
   {
     label: "FC Mobile",
     value: "fc-mobile",
-    icon: "/images/game/fcmobile.webp",
+    icon: "/images/logo/fcmobile.webp",
   },
 ];
 
 export default function BeliAkunPage() {
   const [game, setGame] = useState<string>("");
 
-  const [minPrice, setMinPrice] = useState<string>("");
-  const [maxPrice, setMaxPrice] = useState<string>("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
+  const minRef = useRef<HTMLInputElement | null>(null);
+  const maxRef = useRef<HTMLInputElement | null>(null);
+
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const [openGame, setOpenGame] = useState(false);
 
   const [activeFilters, setActiveFilters] = useState<
     Omit<TAccountFilters, "page" | "limit">
   >({});
 
-  const [openGame, setOpenGame] = useState(false);
-
   const selectedGame =
     gameOptions.find((g) => g.value === game) || gameOptions[0];
 
+  /* =============================
+     CLOSE DROPDOWN SAAT KLIK LUAR
+  ============================== */
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpenGame(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  /* =============================
+     FORMAT RUPIAH
+  ============================== */
+
   const formatRupiah = (value: string) => {
-    const numberString = value.replace(/[^,\d]/g, "");
-    const split = numberString.split(",");
-    const sisa = split[0].length % 3;
-    let rupiah = split[0].substr(0, sisa);
-    const ribuan = split[0].substr(sisa).match(/\d{3}/gi);
-
-    if (ribuan) {
-      const separator = sisa ? "." : "";
-      rupiah += separator + ribuan.join(".");
-    }
-
-    return rupiah;
+    const number = value.replace(/\D/g, "");
+    return new Intl.NumberFormat("id-ID").format(Number(number));
   };
 
-  const handleMinPrice = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMinPrice(formatRupiah(e.target.value));
+  const handlePriceInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (v: string) => void,
+    ref: React.RefObject<HTMLInputElement | null>,
+  ) => {
+    const input = e.target;
+
+    const raw = input.value.replace(/\D/g, "");
+    const formatted = raw ? formatRupiah(raw) : "";
+
+    const cursor = input.selectionStart ?? 0;
+
+    setter(formatted);
+
+    requestAnimationFrame(() => {
+      if (ref.current) {
+        ref.current.selectionStart = cursor;
+        ref.current.selectionEnd = cursor;
+      }
+    });
   };
 
-  const handleMaxPrice = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMaxPrice(formatRupiah(e.target.value));
-  };
+  /* =============================
+     SEARCH
+  ============================== */
 
   const handleSearch = () => {
     const newFilters: Omit<TAccountFilters, "page" | "limit"> = {
@@ -86,7 +124,7 @@ export default function BeliAkunPage() {
         <div className="w-11/12 xl:w-6xl mx-auto py-10">
           <div
             className="
-            bg-[url('/images/filter/bg-filter.webp')]
+            bg-[url('/images/background/bgFaq.webp')]
             rounded-2xl
             bg-cover bg-center
             border-2 border-[#0144FE]
@@ -97,7 +135,7 @@ export default function BeliAkunPage() {
               className={`grid grid-cols-1 md:grid-cols-5 gap-6 items-end ${harabaraMaisDemo.className}`}
             >
               {/* GAME DROPDOWN */}
-              <div className="flex flex-col relative">
+              <div className="flex flex-col relative" ref={dropdownRef}>
                 <label className="text-lg text-gray-300 mb-1">Game</label>
 
                 <button
@@ -114,20 +152,25 @@ export default function BeliAkunPage() {
                     {selectedGame.label}
                   </div>
 
-                  <FaChevronDown />
+                  <FaChevronDown
+                    className={`transition-transform duration-300 ${
+                      openGame ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
 
-                {openGame && (
-                  <div
-                    className="
-                    absolute top-full left-0 w-full
-                    bg-[#1b2030]
-                    rounded-xl mt-2
-                    overflow-hidden
-                    border border-blue-500
-                    z-50
-                  "
-                  >
+                {/* DROPDOWN */}
+                <div
+                  className={`
+                  absolute top-full left-0 w-full
+                  overflow-hidden
+                  transition-all duration-300 ease-in-out
+                  ${
+                    openGame ? "max-h-60 opacity-100 mt-2" : "max-h-0 opacity-0"
+                  }
+                `}
+                >
+                  <div className="bg-[#1b2030] rounded-xl border-2 border-blue-500 shadow-xl">
                     {gameOptions.map((item) => (
                       <div
                         key={item.value}
@@ -140,6 +183,7 @@ export default function BeliAkunPage() {
                         px-4 py-3
                         hover:bg-blue-600
                         cursor-pointer
+                        transition text-white
                       "
                       >
                         <img src={item.icon} className="w-5 h-5" />
@@ -147,7 +191,7 @@ export default function BeliAkunPage() {
                       </div>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* HARGA MIN */}
@@ -157,8 +201,9 @@ export default function BeliAkunPage() {
                 </label>
 
                 <input
+                  ref={minRef}
                   value={minPrice}
-                  onChange={handleMinPrice}
+                  onChange={(e) => handlePriceInput(e, setMinPrice, minRef)}
                   placeholder="Rp 0"
                   className="
                   rounded-xl px-4 py-3
@@ -176,8 +221,9 @@ export default function BeliAkunPage() {
                 </label>
 
                 <input
+                  ref={maxRef}
                   value={maxPrice}
-                  onChange={handleMaxPrice}
+                  onChange={(e) => handlePriceInput(e, setMaxPrice, maxRef)}
                   placeholder="Rp 0"
                   className="
                   rounded-xl px-4 py-3
@@ -210,9 +256,9 @@ export default function BeliAkunPage() {
                 onClick={handleReset}
                 className="
                 h-[48px]
-                border border-white/20
-                hover:border-red-400
-                hover:text-red-400
+                border-2 border-white
+                hover:border-[#E00000]
+                hover:text-[#E00000]
                 transition
                 rounded-xl
                 font-semibold
